@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -8,193 +9,200 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // Controller untuk menangkap data input
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  String _selectedRole = 'visitor';
+  bool _showPassword = false;
+  bool _showConfirmPassword = false;
+  bool _isLoading = false;
 
   void _handleRegister() {
-    // Logic pendaftaran (sementara hanya menampilkan notifikasi)
-    if (_usernameController.text.isNotEmpty && _emailController.text.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Akun ${_usernameController.text} berhasil dibuat!"),
-          backgroundColor: const Color(0xFF6A1B9A),
-        ),
+    setState(() => _isLoading = true);
+    // Simulasi loading
+    Future.delayed(const Duration(seconds: 1), () {
+      setState(() => _isLoading = false);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
-      // Setelah daftar, kembali ke halaman login
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Mohon lengkapi semua data")),
-      );
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Background utama putih bersih
       backgroundColor: Colors.white,
-      // Tombol Back di AppBar agar user bisa kembali ke Login
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF6A1B9A), size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
-                // Header Teks
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Buat Akun",
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: [
+              // Tombol Kembali
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF6A1B9A)),
+                  onPressed: () => Navigator.pop(context),
                 ),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Daftar untuk mulai menjelajah Galuh",
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 30),
+              ),
 
-                // Form Register dalam Card
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: const Color(0xFFF3E5F5)),
-                    boxShadow: [
-                      BoxShadow(
+              // Logo Tanpa Bulatan
+              Image.asset(
+                'assets/splashlogo.png',
+                width: 110,
+                height: 110,
+                errorBuilder: (context, error, stackTrace) =>
+                const Icon(Icons.auto_awesome, size: 80, color: Color(0xFF6A1B9A)),
+              ),
+
+              const SizedBox(height: 10),
+              const Text(
+                  "PESONA GALUH",
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF6A1B9A))
+              ),
+              const Text("Daftar akun baru", style: TextStyle(color: Colors.grey)),
+
+              const SizedBox(height: 30),
+
+              // Form Card (Sekarang menyatu dengan BG Putih atau bisa dikasih border tipis)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  // Shadow tipis biar tetap kelihatan dimensinya
+                  boxShadow: [
+                    BoxShadow(
                         color: Colors.black.withOpacity(0.03),
                         blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Input Username
-                      _buildLabel("Username"),
-                      _buildTextField(_usernameController, Icons.person_outline, "Nama pengguna"),
-
-                      const SizedBox(height: 18),
-
-                      // Input Email
-                      _buildLabel("Email"),
-                      _buildTextField(_emailController, Icons.mail_outline, "alamat@email.com"),
-
-                      const SizedBox(height: 18),
-
-                      // Input No HP
-                      _buildLabel("Nomor WhatsApp"),
-                      _buildTextField(_phoneController, Icons.phone_android, "0812xxxxxxxx"),
-
-                      const SizedBox(height: 18),
-
-                      // Input Password
-                      _buildLabel("Kata Sandi"),
-                      _buildTextField(_passwordController, Icons.lock_outline, "••••••••", isPassword: true),
-
-                      const SizedBox(height: 30),
-
-                      // Tombol Daftar
-                      SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: ElevatedButton(
-                          onPressed: _handleRegister,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6A1B9A),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            "Daftar",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                        offset: const Offset(0, 5)
+                    )
+                  ],
                 ),
-                const SizedBox(height: 30),
-
-                // Link balik ke Login
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Sudah punya akun? "),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Text(
-                        "Masuk di sini",
-                        style: TextStyle(
-                          color: Color(0xFF6A1B9A),
-                          fontWeight: FontWeight.bold,
+                    _buildTextField("Nama Lengkap", _nameController, Icons.person_outline),
+                    const SizedBox(height: 16),
+                    _buildTextField("Email", _emailController, Icons.mail_outline),
+                    const SizedBox(height: 16),
+
+                    const Text(
+                        "Daftar Sebagai",
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6A1B9A))
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _buildRoleButton("Pengunjung", "visitor", "👤"),
+                        const SizedBox(width: 12),
+                        _buildRoleButton("Pengelola", "manager", "👨‍💼"),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+                    _buildPasswordField("Password", _passwordController, _showPassword, () => setState(() => _showPassword = !_showPassword)),
+                    const SizedBox(height: 16),
+                    _buildPasswordField("Konfirmasi Password", _confirmPasswordController, _showConfirmPassword, () => setState(() => _showConfirmPassword = !_showConfirmPassword)),
+
+                    const SizedBox(height: 30),
+
+                    // Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleRegister,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6A1B9A),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          elevation: 0,
                         ),
+                        child: _isLoading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text("Daftar Sekarang", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // Widget pendukung untuk Label
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(
-        text,
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-      ),
+  Widget _buildTextField(String label, TextEditingController controller, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: const Color(0xFF6A1B9A)),
+            filled: true,
+            fillColor: const Color(0xFFF3E5F5).withOpacity(0.4), // Input field tetap ungu muda transparan biar cakep
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+          ),
+        ),
+      ],
     );
   }
 
-  // Widget pendukung untuk TextField agar rapi
-  Widget _buildTextField(TextEditingController controller, IconData icon, String hint, {bool isPassword = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword,
-      decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: const Color(0xFF6A1B9A), size: 22),
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-        fillColor: const Color(0xFFF8F5FB),
-        filled: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
+  Widget _buildPasswordField(String label, TextEditingController controller, bool isVisible, VoidCallback toggle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: !isVisible,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF6A1B9A)),
+            suffixIcon: IconButton(icon: Icon(isVisible ? Icons.visibility_off : Icons.visibility), onPressed: toggle),
+            filled: true,
+            fillColor: const Color(0xFFF3E5F5).withOpacity(0.4),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleButton(String label, String roleValue, String emoji) {
+    bool isSelected = _selectedRole == roleValue;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedRole = roleValue),
+        borderRadius: BorderRadius.circular(15),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF6A1B9A) : Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: const Color(0xFF6A1B9A), width: 1.5),
+          ),
+          child: Column(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 22)),
+              Text(
+                  label,
+                  style: TextStyle(
+                      color: isSelected ? Colors.white : const Color(0xFF6A1B9A),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold
+                  )
+              ),
+            ],
+          ),
         ),
       ),
     );

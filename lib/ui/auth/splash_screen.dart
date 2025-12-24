@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 color: Colors.white.withOpacity(0.15),
               ),
               child: Image.asset(
-                'assets/splashlogo.jpeg',
+                'assets/splashlogo.png',
                 width: 120, // Ukuran logo disesuaikan agar proporsional
                 height: 120,
                 fit: BoxFit.contain,
