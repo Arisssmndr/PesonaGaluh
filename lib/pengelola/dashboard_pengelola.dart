@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'list_tempat.dart';   // Pastikan file ini ada di folder yang sama
+import 'tambah_tempat.dart'; // Pastikan file ini ada di folder yang sama
 
 class DashboardPengelola extends StatelessWidget {
   const DashboardPengelola({super.key});
@@ -6,7 +8,8 @@ class DashboardPengelola extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: _bottomNav(),
+      // Mengirim context agar navigasi di bar bawah berfungsi
+      bottomNavigationBar: _bottomNav(context),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -15,7 +18,7 @@ class DashboardPengelola extends StatelessWidget {
               const SizedBox(height: 16),
               _statisticCards(context),
               const SizedBox(height: 20),
-              _quickMenu(),
+              _quickMenu(context),
               const SizedBox(height: 20),
               _popularPlaces(),
               const SizedBox(height: 30),
@@ -33,20 +36,15 @@ class DashboardPengelola extends StatelessWidget {
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFF7B1FA2),
-            Color(0xFF9C27B0),
-          ],
+          colors: [Color(0xFF7B1FA2), Color(0xFF9C27B0)],
         ),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(24),
-        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
           Text(
-            'Dashboard',
+            'Home', // Diubah dari Dashboard ke Home
             style: TextStyle(
               color: Colors.white,
               fontSize: 22,
@@ -56,10 +54,7 @@ class DashboardPengelola extends StatelessWidget {
           SizedBox(height: 6),
           Text(
             'Selamat datang, Pengelola Wisata',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],
       ),
@@ -112,7 +107,7 @@ class DashboardPengelola extends StatelessWidget {
   }
 
   // ================= QUICK MENU =================
-  Widget _quickMenu() {
+  Widget _quickMenu(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -120,10 +115,7 @@ class DashboardPengelola extends StatelessWidget {
         children: [
           const Text(
             'Menu Cepat',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           GridView.count(
@@ -133,24 +125,47 @@ class DashboardPengelola extends StatelessWidget {
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
             childAspectRatio: 2.6,
-            children: const [
-              _QuickMenu(
-                title: 'Kelola Tempat',
-                icon: Icons.map,
-                filled: true,
+            children: [
+              // 1. KELOLA TEMPAT
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PlaceListScreen(
+                        user: User(role: 'pengelola'),
+                        onNavigate: (screen) => print("Navigasi ke $screen"),
+                        onLogout: () => print("Logout"),
+                      ),
+                    ),
+                  );
+                },
+                child: const _QuickMenu(
+                  title: 'Kelola Tempat',
+                  icon: Icons.map,
+                  filled: true,
+                ),
               ),
-              _QuickMenu(
-                title: 'Tambah Tempat',
-                icon: Icons.add,
+
+              // 2. TAMBAH TEMPAT
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TambahTempatScreen()),
+                  );
+                },
+                child: const _QuickMenu(
+                  title: 'Tambah Tempat',
+                  icon: Icons.add,
+                ),
               ),
-              _QuickMenu(
-                title: 'Pendapatan',
-                icon: Icons.trending_up,
-              ),
-              _QuickMenu(
-                title: 'Profil',
-                icon: Icons.settings,
-              ),
+
+              // 3. PENDAPATAN
+              const _QuickMenu(title: 'Pendapatan', icon: Icons.trending_up),
+
+              // 4. PROFIL
+              const _QuickMenu(title: 'Profil', icon: Icons.settings),
             ],
           ),
         ],
@@ -170,17 +185,11 @@ class DashboardPengelola extends StatelessWidget {
             children: const [
               Text(
                 'Tempat Populer',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               Text(
                 'Lihat Semua',
-                style: TextStyle(
-                  color: Color(0xFF9C27B0),
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: Color(0xFF9C27B0), fontSize: 13),
               ),
             ],
           ),
@@ -189,51 +198,53 @@ class DashboardPengelola extends StatelessWidget {
             title: 'Curug Jami',
             subtitle: 'Curug',
             visitor: '2.3K pengunjung',
-            image:
-            'https://images.unsplash.com/photo-1584810359583-96fc3448beaa',
+            image: 'https://images.unsplash.com/photo-1584810359583-96fc3448beaa',
           ),
           const _PlaceTile(
             title: 'Cadas Ngampar',
             subtitle: 'Sungai',
             visitor: '1.8K pengunjung',
-            image:
-            'https://images.unsplash.com/photo-1507525428034-b723cf961d3e',
-          ),
-          const _PlaceTile(
-            title: 'Curug Tujuh',
-            subtitle: 'Curug',
-            visitor: '1.5K pengunjung',
-            image:
-            'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
+            image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e',
           ),
         ],
       ),
     );
   }
 
-  // ================= BOTTOM NAV =================
-  Widget _bottomNav() {
+  // ================= BOTTOM NAV (MENU HOME) =================
+  Widget _bottomNav(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: 0,
+      type: BottomNavigationBarType.fixed,
       selectedItemColor: const Color(0xFF9C27B0),
       unselectedItemColor: Colors.grey,
+      onTap: (index) {
+        if (index == 1) { // Tab Tempat
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PlaceListScreen(
+                user: User(role: 'pengelola'),
+                onNavigate: (screen) => {},
+                onLogout: () => {},
+              ),
+            ),
+          );
+        } else if (index == 2) { // Tab Tambah
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const TambahTempatScreen()),
+          );
+        }
+      },
       items: const [
         BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard),
-          label: 'Dashboard',
+          icon: Icon(Icons.home), // Ikon Dashboard ganti ke Home
+          label: 'Home',           // Label ganti ke Home
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.place),
-          label: 'Tempat',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle),
-          label: 'Tambah',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profil',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.place), label: 'Tempat'),
+        BottomNavigationBarItem(icon: Icon(Icons.add_circle), label: 'Tambah'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
       ],
     );
   }
@@ -243,16 +254,10 @@ class DashboardPengelola extends StatelessWidget {
 
 class _StatCard extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String value;
+  final String title, value;
   final Color color;
 
-  const _StatCard({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.color,
-  });
+  const _StatCard({required this.icon, required this.title, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -261,29 +266,15 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-          )
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color),
           const Spacer(),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -295,11 +286,7 @@ class _QuickMenu extends StatelessWidget {
   final IconData icon;
   final bool filled;
 
-  const _QuickMenu({
-    required this.title,
-    required this.icon,
-    this.filled = false,
-  });
+  const _QuickMenu({required this.title, required this.icon, this.filled = false});
 
   @override
   Widget build(BuildContext context) {
@@ -307,14 +294,12 @@ class _QuickMenu extends StatelessWidget {
       decoration: BoxDecoration(
         color: filled ? const Color(0xFF7B1FA2) : Colors.white,
         borderRadius: BorderRadius.circular(14),
+        border: filled ? null : Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            color: filled ? Colors.white : const Color(0xFF9C27B0),
-          ),
+          Icon(icon, color: filled ? Colors.white : const Color(0xFF9C27B0)),
           const SizedBox(height: 6),
           Text(
             title,
@@ -330,37 +315,21 @@ class _QuickMenu extends StatelessWidget {
 }
 
 class _PlaceTile extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String visitor;
-  final String image;
+  final String title, subtitle, visitor, image;
 
-  const _PlaceTile({
-    required this.title,
-    required this.subtitle,
-    required this.visitor,
-    required this.image,
-  });
+  const _PlaceTile({required this.title, required this.subtitle, required this.visitor, required this.image});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
       child: Row(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              image,
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-            ),
+            child: Image.network(image, width: 60, height: 60, fit: BoxFit.cover),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -368,18 +337,9 @@ class _PlaceTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                Text(
-                  subtitle,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+                Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 4),
-                Text(
-                  visitor,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF9C27B0),
-                  ),
-                ),
+                Text(visitor, style: const TextStyle(fontSize: 12, color: Color(0xFF9C27B0))),
               ],
             ),
           ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register_screen.dart';
-import '../../pengunjung/screens/dashboard_screen.dart'; // Import dashboard pengunjung
+import '../../pengelola/dashboard_pengelola.dart'; // Import dashboard pengunjung
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // Navigasi langsung ke dashboard (Sementara)
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const DashboardPengunjung()),
+      MaterialPageRoute(builder: (context) => const DashboardPengelola()),
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
