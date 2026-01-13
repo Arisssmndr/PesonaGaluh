@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../firebase_options.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -19,29 +22,76 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _showConfirmPassword = false;
   bool _isLoading = false;
 
-  void _handleRegister() {
+  // FUNGSI REGISTRASI KE FIREBASE (DENGAN PENYIMPANAN ROLE)
+  Future<void> _handleRegister() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty || _nameController.text.isEmpty) {
+      _showSnackBar("Harap isi semua bidang!");
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showSnackBar("Konfirmasi password tidak cocok!");
+      return;
+    }
+
     setState(() => _isLoading = true);
-    // Simulasi loading
-    Future.delayed(const Duration(seconds: 1), () {
-      setState(() => _isLoading = false);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+
+    try {
+      // 1. Proses Daftarkan ke Firebase Auth
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
-    });
+
+      // 2. Simpan Data Role & Nama ke Cloud Firestore
+      // UID diambil dari hasil pendaftaran Auth di atas
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+        'uid': userCredential.user!.uid,
+        'nama': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'role': _selectedRole, // Menyimpan 'visitor' atau 'manager'
+        'createdAt': DateTime.now(),
+      });
+
+      if (mounted) {
+        _showSnackBar("Akun ${_selectedRole == 'manager' ? 'Pengelola' : 'Pengunjung'} Berhasil Dibuat!");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMsg = "Terjadi kesalahan";
+      if (e.code == 'weak-password') {
+        errorMsg = "Password terlalu lemah (min. 6 karakter).";
+      } else if (e.code == 'email-already-in-use') {
+        errorMsg = "Email ini sudah terdaftar.";
+      } else if (e.code == 'invalid-email') {
+        errorMsg = "Format email salah.";
+      }
+      _showSnackBar(errorMsg);
+    } catch (e) {
+      _showSnackBar("Gagal daftar: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSnackBar(String pesan) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(pesan), backgroundColor: const Color(0xFF6A1B9A)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Background utama putih bersih
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              // Tombol Kembali
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
@@ -50,11 +100,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
 
-              // Logo Tanpa Bulatan
               Image.asset(
                 'assets/splashlogo.png',
-                width: 110,
-                height: 110,
+                width: 100,
+                height: 100,
                 errorBuilder: (context, error, stackTrace) =>
                 const Icon(Icons.auto_awesome, size: 80, color: Color(0xFF6A1B9A)),
               ),
@@ -66,15 +115,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const Text("Daftar akun baru", style: TextStyle(color: Colors.grey)),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 25),
 
-              // Form Card (Sekarang menyatu dengan BG Putih atau bisa dikasih border tipis)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  // Shadow tipis biar tetap kelihatan dimensinya
                   boxShadow: [
                     BoxShadow(
                         color: Colors.black.withOpacity(0.03),
@@ -111,7 +158,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 30),
 
-                    // Button
                     SizedBox(
                       width: double.infinity,
                       height: 55,
@@ -148,7 +194,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: const Color(0xFF6A1B9A)),
             filled: true,
-            fillColor: const Color(0xFFF3E5F5).withOpacity(0.4), // Input field tetap ungu muda transparan biar cakep
+            fillColor: const Color(0xFFF3E5F5).withOpacity(0.4),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
           ),
         ),
