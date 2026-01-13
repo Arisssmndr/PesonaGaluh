@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Pastikan tulisannya seperti ini
 import 'register_screen.dart';
 import '../../pengunjung/screens/dashboard_screen.dart';
+import '../../pengelola/screens/dashboard_screen.dart';
 // Import file dashboard pengelola kamu di sini, contoh:
 // import '../../pengelola/screens/dashboard_pengelola.dart';
 
