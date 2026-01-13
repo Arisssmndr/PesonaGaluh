@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Tambah ini untuk logout nanti
+import 'favorit_screen.dart';
+import 'tiket_screen.dart';
+import 'profil_screen.dart';
 import 'detail_wisata_screen.dart';
 
 class DashboardPengunjung extends StatefulWidget {
@@ -11,50 +15,57 @@ class DashboardPengunjung extends StatefulWidget {
 class _DashboardPengunjungState extends State<DashboardPengunjung> {
   int _selectedIndex = 0;
 
+  // --- 1. DAFTAR HALAMAN ---
+  // Kita buat fungsi agar halaman di-load dengan benar
+  List<Widget> _getHalaman() {
+    return [
+      _buildBerandaContent(), // Index 0
+      const FavoritScreen(),  // Index 1
+      const Center(child: Text("Halaman Tiket Segera Hadir!")), // Index 2
+      const ProfilScreen(),   // Index 3 (Pastikan ProfilScreen kamu ada const-nya)
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // --- HEADER SESUAI FOTO ---
-              _buildTopHeader(),
-
-              // --- SEARCH BAR ---
-              _buildSearchBar(),
-
-              // --- CATEGORIES ---
-              _buildCategories(),
-
-              // --- PROMO BANNER ---
-              _buildPromoBanner(),
-
-              // --- DESTINASI POPULER (CARD DARI FIGMA) ---
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text("Destinasi Populer", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text("Lihat Semua", style: TextStyle(color: Color(0xFF6A1B9A), fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-
-              _buildWisataGrid(),
-
-              const SizedBox(height: 100),
-            ],
-          ),
-        ),
+        // Body akan berganti sesuai menu yang diklik
+        child: _getHalaman()[_selectedIndex],
       ),
-      // --- BOTTOM NAVIGATION BAR ---
       bottomNavigationBar: _buildBottomNav(),
     );
   }
+
+  // --- 2. ISI BERANDA (Kodingan Estetik Kamu) ---
+  Widget _buildBerandaContent() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTopHeader(),
+          _buildSearchBar(),
+          _buildCategories(),
+          _buildPromoBanner(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text("Destinasi Populer", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text("Lihat Semua", style: TextStyle(color: Color(0xFF6A1B9A), fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          _buildWisataGrid(),
+          const SizedBox(height: 100), // Kasih jarak biar gak ketutup nav bawah
+        ],
+      ),
+    );
+  }
+
+  // --- FUNGSI HELPER UI ---
 
   Widget _buildTopHeader() {
     return Padding(
@@ -67,6 +78,7 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
             backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=aris'),
           ),
           Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Row(
                 children: const [
@@ -82,20 +94,21 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
               ),
             ],
           ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-            ),
-            child: const Badge(
-              label: Text("2"),
-              child: Icon(Icons.notifications_outlined, color: Colors.black),
-            ),
-          ),
+          _buildNotificationIcon(),
         ],
       ),
+    );
+  }
+
+  Widget _buildNotificationIcon() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+      ),
+      child: const Icon(Icons.notifications_outlined, color: Colors.black),
     );
   }
 
@@ -140,6 +153,7 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
       {"name": "Air Terjun", "icon": "💧"},
       {"name": "Puncak", "icon": "⛰️"},
       {"name": "Hutan", "icon": "🌲"},
+      {"name": "Pantai", "icon": "🏖️"},
     ];
     return Container(
       height: 100,
@@ -219,7 +233,6 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
 
   Widget _buildWisataCard(BuildContext context) {
     return GestureDetector(
-      // Ganti bagian onTap di Card Wisata:
       onTap: () {
         Navigator.push(
           context,
@@ -247,9 +260,9 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
                       ),
                     ),
                   ),
-                  Positioned(
+                  const Positioned(
                     top: 10, right: 10,
-                    child: CircleAvatar(backgroundColor: Colors.white.withOpacity(0.8), child: const Icon(Icons.favorite_border, color: Colors.red, size: 20)),
+                    child: CircleAvatar(backgroundColor: Colors.white, child: Icon(Icons.favorite_border, color: Colors.red, size: 20)),
                   ),
                 ],
               ),
