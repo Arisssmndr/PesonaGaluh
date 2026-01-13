@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "296204167686",
+    "project_id": "pesona-galuh",
+    "storage_bucket": "pesona-galuh.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:296204167686:android:c9e08ef5e55ea9a959f187",
+        "android_client_info": {
+          "package_name": "com.example.pesonagaluh"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTsd8CohnqI-tJkWc6nszi2EQs089GwvE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
