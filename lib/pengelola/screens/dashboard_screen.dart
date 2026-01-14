@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-
-=======
 import 'package:flutter/material.dart';
 import 'edit_tempat.dart'; // Pastikan import file edit yang dibuat tadi
 
@@ -339,4 +336,3 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
     );
   }
 }
->>>>>>> origin/dev-esa
