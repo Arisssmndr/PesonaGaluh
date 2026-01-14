@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Tambah ini untuk logout nanti
 import 'favorit_screen.dart';
-import 'tiket_screen.dart';
+//import 'tiket_screen.dart';
 import 'profil_screen.dart';
 import 'detail_wisata_screen.dart';
+import 'daftar.dart';
 
 class DashboardPengunjung extends StatefulWidget {
   const DashboardPengunjung({super.key});
@@ -20,9 +21,8 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
   List<Widget> _getHalaman() {
     return [
       _buildBerandaContent(), // Index 0
-      const FavoritScreen(),  // Index 1
-      const Center(child: Text("Halaman Tiket Segera Hadir!")), // Index 2
-      const ProfilScreen(),   // Index 3 (Pastikan ProfilScreen kamu ada const-nya)
+      const FavoritScreen(), // Index 1
+      const ProfilScreen(), // Index 2 (Pastikan ProfilScreen kamu ada const-nya)
     ];
   }
 
@@ -47,14 +47,33 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
           _buildTopHeader(),
           _buildSearchBar(),
           _buildCategories(),
-          _buildPromoBanner(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
-                Text("Destinasi Populer", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text("Lihat Semua", style: TextStyle(color: Color(0xFF6A1B9A), fontWeight: FontWeight.bold)),
+                Text(
+                  "Destinasi Populer",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                // Cari bagian ini di kodingan Dashboard kamu
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const daftartempat(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Lihat Semua",
+                    style: TextStyle(
+                      color: Color(0xFF6A1B9A),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -82,14 +101,20 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
             children: [
               Row(
                 children: const [
-                  Text("Lokasi Saya", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text(
+                    "Lokasi Saya",
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
                   Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.grey),
                 ],
               ),
               Row(
                 children: const [
                   Icon(Icons.location_on, color: Colors.red, size: 18),
-                  Text(" Ciamis, Jawa Barat", style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    " Ciamis, Jawa Barat",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ],
@@ -106,7 +131,9 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+        ],
       ),
       child: const Icon(Icons.notifications_outlined, color: Colors.black),
     );
@@ -169,48 +196,28 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.purple.shade50),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(categories[index]['icon'], style: const TextStyle(fontSize: 24)),
+              Text(
+                categories[index]['icon'],
+                style: const TextStyle(fontSize: 24),
+              ),
               const SizedBox(height: 5),
-              Text(categories[index]['name'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              Text(
+                categories[index]['name'],
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPromoBanner() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFF6A1B9A), Color(0xFF9C27B0)]),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Promo Spesial!", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                const Text("Diskon 30% Tiket Masuk", style: TextStyle(color: Colors.white70)),
-                const SizedBox(height: 15),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.purple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                  child: const Text("Ambil Promo"),
-                )
-              ],
-            ),
-          ),
-          const Icon(Icons.confirmation_num_outlined, size: 80, color: Colors.white24),
-        ],
       ),
     );
   }
@@ -243,7 +250,9 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(25),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,16 +262,28 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(25),
+                      ),
                       image: const DecorationImage(
-                        image: NetworkImage('https://images.unsplash.com/photo-1604223190546-a43e4c7f29d7'),
+                        image: NetworkImage(
+                          'https://images.unsplash.com/photo-1604223190546-a43e4c7f29d7',
+                        ),
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
                   const Positioned(
-                    top: 10, right: 10,
-                    child: CircleAvatar(backgroundColor: Colors.white, child: Icon(Icons.favorite_border, color: Colors.red, size: 20)),
+                    top: 10,
+                    right: 10,
+                    child: CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.favorite_border,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -272,18 +293,34 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Bukit Baros", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text(
+                    "Bukit Baros",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
                   Row(
                     children: const [
-                      Icon(Icons.location_on, size: 12, color: Color(0xFF6A1B9A)),
-                      Text(" Ciamis", style: TextStyle(color: Colors.grey, fontSize: 10)),
+                      Icon(
+                        Icons.location_on,
+                        size: 12,
+                        color: Color(0xFF6A1B9A),
+                      ),
+                      Text(
+                        " Ciamis",
+                        style: TextStyle(color: Colors.grey, fontSize: 10),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: const [
-                      Text("Rp 15.000", style: TextStyle(color: Color(0xFF6A1B9A), fontWeight: FontWeight.bold)),
+                      Text(
+                        "Rp 15.000",
+                        style: TextStyle(
+                          color: Color(0xFF6A1B9A),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       Row(
                         children: [
                           Icon(Icons.star, color: Colors.orange, size: 14),
@@ -306,15 +343,16 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _navItem(Icons.home_filled, "Beranda", 0),
           _navItem(Icons.favorite, "Favorit", 1),
-          _navItem(Icons.confirmation_number, "Tiket", 2),
-          _navItem(Icons.person, "Profil", 3),
+          _navItem(Icons.person, "Profil", 2),
         ],
       ),
     );
@@ -328,7 +366,13 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: isSelected ? const Color(0xFF6A1B9A) : Colors.grey),
-          Text(label, style: TextStyle(color: isSelected ? const Color(0xFF6A1B9A) : Colors.grey, fontSize: 12)),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? const Color(0xFF6A1B9A) : Colors.grey,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
