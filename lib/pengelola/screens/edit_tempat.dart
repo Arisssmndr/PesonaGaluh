@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 
 class EditTempatScreen extends StatefulWidget {
-  final Map<String, String> place;
+  final Map<String, dynamic> place; // Ubah ke dynamic
+  final String docId; // Tambahkan docId untuk referensi database
 
-  const EditTempatScreen({super.key, required this.place});
+  const EditTempatScreen({super.key, required this.place, required this.docId});
 
   @override
   State<EditTempatScreen> createState() => _EditTempatScreenState();
@@ -15,16 +17,51 @@ class _EditTempatScreenState extends State<EditTempatScreen> {
   late TextEditingController _priceController;
   late TextEditingController _descController;
   late String _selectedCategory;
+  bool _isLoading = false; // Untuk indikator loading
 
   @override
   void initState() {
     super.initState();
-    // Mengisi data awal sesuai data yang dipilih
+    // Mengisi data awal dari Firebase
     _nameController = TextEditingController(text: widget.place['name']);
     _locationController = TextEditingController(text: widget.place['location']);
     _priceController = TextEditingController(text: widget.place['price']);
     _descController = TextEditingController(text: widget.place['description']);
     _selectedCategory = widget.place['category'] ?? 'Danau';
+  }
+
+  // Fungsi untuk update data ke Firebase
+  Future<void> _handleUpdate() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('places')
+          .doc(widget.docId) // Menuju dokumen yang spesifik berdasarkan ID
+          .update({
+        'name': _nameController.text,
+        'location': _locationController.text,
+        'category': _selectedCategory,
+        'price': _priceController.text,
+        'description': _descController.text,
+        'updatedAt': FieldValue.serverTimestamp(), // Catat waktu perubahan
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Perubahan berhasil disimpan!')),
+        );
+        Navigator.pop(context); // Kembali ke Dashboard
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal update: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -47,23 +84,16 @@ class _EditTempatScreenState extends State<EditTempatScreen> {
             _buildTextField(_descController, 'Deskripsi', maxLines: 4),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () {
-                // Mengirim data baru kembali ke Dashboard
-                Navigator.pop(context, {
-                  'id': widget.place['id']!,
-                  'name': _nameController.text,
-                  'location': _locationController.text,
-                  'category': _selectedCategory,
-                  'price': _priceController.text,
-                  'description': _descController.text,
-                });
-              },
+              onPressed: _isLoading ? null : _handleUpdate,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6A1B9A),
                 minimumSize: const Size(double.infinity, 56),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: const Text('Simpan Perubahan', style: TextStyle(color: Colors.white, fontSize: 16)),
+              child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Simpan Perubahan',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
