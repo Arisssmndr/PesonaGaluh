@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+// Import file internal proyek Anda
 import 'edit_tempat.dart';
 import 'tambah_tempat.dart';
+import 'detail_wisata_screen.dart';
+import '../../ui/auth/login_screen.dart';
 
 class DashboardPengelola extends StatefulWidget {
   const DashboardPengelola({super.key});
@@ -12,14 +15,14 @@ class DashboardPengelola extends StatefulWidget {
 }
 
 class _DashboardPengelolaState extends State<DashboardPengelola> {
-  // Variabel untuk Search dan Filter
   String _searchQuery = "";
   String _selectedCategory = "Semua";
   final TextEditingController _searchController = TextEditingController();
 
-  // Daftar Kategori Sesuai Permintaan
+  // List kategori ditambah dengan "Terpopuler"
   final List<String> _categories = [
     "Semua",
+    "Terpopuler", // Filter baru berdasarkan jumlah views
     "Danau",
     "Air Terjun",
     "Hutan",
@@ -27,7 +30,6 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
     "Sungai"
   ];
 
-  // --- FUNGSI: LOGOUT ---
   void _handleLogout() {
     showDialog(
       context: context,
@@ -41,8 +43,17 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
             child: const Text('Batal', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context), // Redirect ke LoginScreen di sini
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6A1B9A), foregroundColor: Colors.white),
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6A1B9A),
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Keluar'),
           ),
         ],
@@ -50,7 +61,6 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
     );
   }
 
-  // --- FUNGSI: HAPUS ---
   Future<void> _handleDelete(String docId, String placeName) async {
     bool confirm = await showDialog(
       context: context,
@@ -86,9 +96,9 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
               child: Column(
                 children: [
                   _statsSection(),
-                  _searchAndFilterSection(), // Nav Pencarian & Filter
+                  _searchAndFilterSection(),
                   _addToggleButton(),
-                  _placesListStream(), // Hasil Pencarian & List
+                  _placesListStream(),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -101,50 +111,52 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
 
   Widget _header() {
     return Container(
-      padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 40),
+      padding: const EdgeInsets.only(top: 50, left: 24, right: 24, bottom: 20),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Color(0xFF6A1B9A), Color(0xFF9C27B0)]),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF6A1B9A), Color(0xFF9C27B0)],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Admin Dashboard', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              Text('Kelola Wisata Ciamis', style: TextStyle(color: Colors.white70)),
+              Text('Admin Dashboard', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              Text('Kelola Wisata Ciamis', style: TextStyle(color: Colors.white70, fontSize: 13)),
             ],
           ),
-          IconButton(onPressed: _handleLogout, icon: const Icon(Icons.logout, color: Colors.white)),
+          IconButton(onPressed: _handleLogout, icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 26)),
         ],
       ),
     );
   }
 
   Widget _statsSection() {
-    return Transform.translate(
-      offset: const Offset(0, -25),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('places').snapshots(),
-          builder: (context, snapshot) {
-            int totalViews = 0;
-            if (snapshot.hasData) {
-              for (var doc in snapshot.data!.docs) {
-                totalViews += ((doc.data() as Map<String, dynamic>)['views'] as num? ?? 0).toInt();
-              }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('places').snapshots(),
+        builder: (context, snapshot) {
+          int totalViews = 0;
+          if (snapshot.hasData) {
+            for (var doc in snapshot.data!.docs) {
+              totalViews += ((doc.data() as Map<String, dynamic>)['views'] as num? ?? 0).toInt();
             }
-            return Row(
-              children: [
-                _statCard('Destinasi', snapshot.hasData ? snapshot.data!.docs.length.toString() : '...', Icons.map, Colors.purple),
-                const SizedBox(width: 16),
-                _statCard('Total Views', totalViews.toString(), Icons.visibility, Colors.blue),
-              ],
-            );
-          },
-        ),
+          }
+          return Row(
+            children: [
+              _statCard('Destinasi', snapshot.hasData ? snapshot.data!.docs.length.toString() : '0', Icons.map_rounded, Colors.purple),
+              const SizedBox(width: 12),
+              _statCard('Total Views', totalViews.toString(), Icons.visibility_rounded, Colors.blue),
+            ],
+          );
+        },
       ),
     );
   }
@@ -152,24 +164,34 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
   Widget _statCard(String title, String value, IconData icon, Color color) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8)],
+        ),
+        child: Row(
           children: [
-            Icon(icon, color: color, size: 20),
-            Text(title, style: const TextStyle(color: Colors.grey, fontSize: 11)),
-            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                  Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // --- BAGIAN PENCARIAN & FILTER KATEGORI ---
   Widget _searchAndFilterSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       child: Column(
         children: [
           TextField(
@@ -177,15 +199,16 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
             onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
             decoration: InputDecoration(
               hintText: "Cari nama destinasi...",
-              prefixIcon: const Icon(Icons.search, color: Colors.purple),
+              prefixIcon: const Icon(Icons.search, color: Colors.purple, size: 20),
               filled: true,
               fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             ),
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 40,
+            height: 35,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: _categories.length,
@@ -198,9 +221,10 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
                     selected: isSelected,
                     onSelected: (val) => setState(() => _selectedCategory = _categories[index]),
                     selectedColor: const Color(0xFF6A1B9A),
-                    labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontSize: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontSize: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     showCheckmark: false,
+                    visualDensity: VisualDensity.compact,
                   ),
                 );
               },
@@ -213,38 +237,55 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
 
   Widget _addToggleButton() {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       child: ElevatedButton.icon(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const TambahTempatScreen())),
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add, size: 18),
         label: const Text('Tambah Destinasi'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6A1B9A), foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          backgroundColor: const Color(0xFF6A1B9A),
+          foregroundColor: Colors.white,
+          minimumSize: const Size(double.infinity, 45),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );
   }
 
-  // --- STREAM LIST DENGAN LOGIKA SEARCH & FILTER ---
   Widget _placesListStream() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('places').orderBy('createdAt', descending: true).snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+    // Logika pengurutan: Jika "Terpopuler" dipilih, urutkan berdasarkan 'views' descending
+    Query query = FirebaseFirestore.instance.collection('places');
 
-        // Logika Filter
-        var docs = snapshot.data!.docs.where((doc) {
+    if (_selectedCategory == "Terpopuler") {
+      query = query.orderBy('views', descending: true);
+    } else {
+      query = query.orderBy('createdAt', descending: true);
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: query.snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+        }
+
+        var docs = snapshot.data?.docs.where((doc) {
           var data = doc.data() as Map<String, dynamic>;
           String name = (data['name'] ?? "").toString().toLowerCase();
           String category = data['category'] ?? "";
 
           bool matchesSearch = name.contains(_searchQuery);
-          bool matchesCategory = _selectedCategory == "Semua" || category == _selectedCategory;
+
+          // Logika filter kategori
+          bool matchesCategory = false;
+          if (_selectedCategory == "Semua" || _selectedCategory == "Terpopuler") {
+            matchesCategory = true;
+          } else {
+            matchesCategory = category == _selectedCategory;
+          }
 
           return matchesSearch && matchesCategory;
-        }).toList();
+        }).toList() ?? [];
 
         if (docs.isEmpty) return const Padding(padding: EdgeInsets.all(40), child: Text("Data tidak ditemukan"));
 
@@ -255,8 +296,7 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
           itemCount: docs.length,
           itemBuilder: (context, index) {
             var doc = docs[index];
-            Map<String, dynamic> item = doc.data() as Map<String, dynamic>;
-            return _placeCard(doc.id, item);
+            return _placeCard(doc.id, doc.data() as Map<String, dynamic>);
           },
         );
       },
@@ -265,49 +305,97 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
 
   Widget _placeCard(String docId, Map<String, dynamic> item) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10)]),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            child: item['imagePath'] != null
-                ? Image.network(item['imagePath'], height: 160, width: double.infinity, fit: BoxFit.cover)
-                : Container(height: 160, color: Colors.grey[200], child: const Icon(Icons.image)),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
+          InkWell(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => DetailWisataScreen(place: item))),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _badge(item['category'] ?? 'Umum'),
-                const SizedBox(height: 10),
-                Text(item['name'] ?? '', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Row(
+                Stack(
                   children: [
-                    const Icon(Icons.location_on, size: 14, color: Colors.purple),
-                    const SizedBox(width: 4),
-                    Expanded(child: Text(item['location'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                      child: item['imagePath'] != null
+                          ? Image.network(item['imagePath'], height: 160, width: double.infinity, fit: BoxFit.cover)
+                          : Container(height: 160, color: Colors.grey[200], child: const Icon(Icons.image)),
+                    ),
+                    // Badge Views di pojok gambar agar admin tahu jumlah kliknya
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.visibility, color: Colors.white, size: 12),
+                            const SizedBox(width: 4),
+                            Text(
+                              "${item['views'] ?? 0}",
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-                const Divider(height: 30),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _badge(item['category'] ?? 'Umum'),
+                      const SizedBox(height: 8),
+                      Text(item['name'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, size: 14, color: Color(0xFF6A1B9A)),
+                          const SizedBox(width: 4),
+                          Expanded(child: Text(item['location'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                const Divider(height: 24),
                 Row(
                   children: [
                     if (item['gmapsUrl'] != null && item['gmapsUrl'] != "")
-                      _smallButton("Maps", Icons.near_me, Colors.green, () => launchUrl(Uri.parse(item['gmapsUrl']))),
+                      _smallButton(
+                        "Kunjungi",
+                        Icons.near_me_rounded,
+                        const Color(0xFF6A1B9A),
+                            () => launchUrl(Uri.parse(item['gmapsUrl'])),
+                      ),
                     const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => EditTempatScreen(place: item, docId: docId))),
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                    ),
-                    IconButton(
-                      onPressed: () => _handleDelete(docId, item['name']),
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                    ),
+                    _actionIcon(Icons.edit_rounded, Colors.blue, () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => EditTempatScreen(place: item, docId: docId)));
+                    }),
+                    const SizedBox(width: 8),
+                    _actionIcon(Icons.delete_rounded, Colors.red, () => _handleDelete(docId, item['name'])),
                   ],
-                )
+                ),
               ],
             ),
           )
@@ -319,25 +407,44 @@ class _DashboardPengelolaState extends State<DashboardPengelola> {
   Widget _smallButton(String label, IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4)),
+          ],
+        ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 14, color: Colors.white),
-            const SizedBox(width: 4),
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
           ],
         ),
       ),
     );
   }
 
+  Widget _actionIcon(IconData icon, Color color, VoidCallback onTap) {
+    return Container(
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+      child: IconButton(
+        visualDensity: VisualDensity.compact,
+        onPressed: onTap,
+        icon: Icon(icon, color: color, size: 20),
+      ),
+    );
+  }
+
   Widget _badge(String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: Colors.purple.shade50, borderRadius: BorderRadius.circular(8)),
-      child: Text(label, style: const TextStyle(color: Color(0xFF6A1B9A), fontSize: 10, fontWeight: FontWeight.bold)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: const Color(0xFF6A1B9A).withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+      child: Text(label, style: const TextStyle(color: Color(0xFF6A1B9A), fontSize: 9, fontWeight: FontWeight.bold)),
     );
   }
 }
