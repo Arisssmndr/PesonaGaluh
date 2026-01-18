@@ -3,8 +3,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'detail_wisata_screen.dart';
 
 class SearchResultScreen extends StatefulWidget {
-  final String query;
-  const SearchResultScreen({super.key, required this.query});
+  final String? query;
+  final String? category;
+  final String? location;
+  final int? minPrice;
+  final int? maxPrice;
+
+const SearchResultScreen({
+    super.key, 
+    this.query, 
+    this.category, 
+    this.location, 
+    this.minPrice, 
+    this.maxPrice,
+  });
 
   @override
   State<SearchResultScreen> createState() => _SearchResultScreenState();
@@ -16,10 +28,11 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   bool _showSuggestions = false;
 
   @override
-  void initState() {
+void initState() {
     super.initState();
-    _currentQuery = widget.query;
-    _searchController = TextEditingController(text: widget.query);
+    // Mengambil query dari widget, jika kosong beri teks kosong
+    _currentQuery = widget.query ?? "";
+    _searchController = TextEditingController(text: _currentQuery);
   }
 
   @override
@@ -116,29 +129,57 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   }
 
   Widget _buildMainResultList() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('places').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+  return StreamBuilder<QuerySnapshot>(
+    // Kita ambil semua data dari koleksi 'places'
+    stream: FirebaseFirestore.instance.collection('places').snapshots(),
+    builder: (context, snapshot) {
+      if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
-        var results = snapshot.data!.docs.where((doc) {
-          String name = (doc['name'] ?? '').toString().toLowerCase();
-          return name.contains(_currentQuery.toLowerCase());
-        }).toList();
+      // Di sinilah kita melakukan penyaringan (Filtering) secara fleksibel
+      var results = snapshot.data!.docs.where((doc) {
+        var data = doc.data() as Map<String, dynamic>;
 
-        if (results.isEmpty) return _buildEmptyState();
+        // 1. Logika Filter Nama (Query pencarian)
+        String name = (data['name'] ?? '').toString().toLowerCase();
+        bool matchName = _currentQuery.isEmpty || name.contains(_currentQuery.toLowerCase());
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: results.length,
-          itemBuilder: (context, index) {
-            var data = results[index].data() as Map<String, dynamic>;
-            return _buildPremiumCard(context, data);
-          },
-        );
-      },
-    );
-  }
+        // 2. Logika Filter Lokasi (Fleksibel - Mengandung Kata)
+        // Kita cek di field 'location' atau 'address'
+        String locationData = (data['location'] ?? '').toString().toLowerCase();
+        String addressData = (data['address'] ?? '').toString().toLowerCase();
+        bool matchLocation = widget.location == null || 
+                             widget.location!.isEmpty || 
+                             locationData.contains(widget.location!.toLowerCase()) ||
+                             addressData.contains(widget.location!.toLowerCase());
+
+        // 3. Logika Filter Kategori
+        String categoryData = (data['category'] ?? '').toString();
+        bool matchCategory = widget.category == null || 
+                             widget.category!.isEmpty || 
+                             categoryData == widget.category;
+
+        // 4. Logika Filter Harga
+        int price = data['price'] ?? 0;
+        bool matchMin = widget.minPrice == null || price >= widget.minPrice!;
+        bool matchMax = widget.maxPrice == null || price <= widget.maxPrice!;
+
+        // Data akan ditampilkan HANYA jika semua syarat di atas terpenuhi (TRUE)
+        return matchName && matchLocation && matchCategory && matchMin && matchMax;
+      }).toList();
+
+      if (results.isEmpty) return _buildEmptyState();
+
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: results.length,
+        itemBuilder: (context, index) {
+          var data = results[index].data() as Map<String, dynamic>;
+          return _buildPremiumCard(context, data);
+        },
+      );
+    },
+  );
+}
 
   Widget _buildPremiumCard(BuildContext context, Map<String, dynamic> data) {
     return GestureDetector(

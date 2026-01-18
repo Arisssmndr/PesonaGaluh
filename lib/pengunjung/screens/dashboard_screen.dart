@@ -22,6 +22,11 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
   String _lokasiUser = "Mencari lokasi...";
   final TextEditingController _searchController = TextEditingController();
 
+  String _selectedCategory = "";
+  String _selectedLocation = "";
+  final TextEditingController _minPriceController = TextEditingController();
+  final TextEditingController _maxPriceController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -81,7 +86,9 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
         child: IndexedStack(index: _selectedIndex, children: _getHalaman()),
       ),
       bottomNavigationBar: _buildBottomNav(),
+      
     );
+
   }
 
   // --- REVISI: BOX PUTIH MUNCUL & SCROLL MENYATU ---
@@ -89,7 +96,7 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
 Widget _buildBerandaSatuScroll() {
     return Stack(
       children: [
-        // 1. Bagian Ungu (Header, Search, Kategori)
+        // 1. Bagian Ungu (Header, Search, Kategori) - TETAP SAMA
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -111,54 +118,197 @@ Widget _buildBerandaSatuScroll() {
           minChildSize: 0.48, 
           maxChildSize: 0.95, 
           snap: true,
-          // Tambahkan snapSizes agar kotak langsung 'nempel' ke atas saat ditarik
           snapSizes: const [0.48, 0.95], 
           builder: (context, scrollController) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8F9FA),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(35), 
-                  topRight: Radius.circular(35)
-                ),
-                boxShadow: [
-                  BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, -5))
-                ],
-              ),
-              // Agar SATU KOTAK terangkat, kita gunakan SingleChildScrollView
-              // yang dihubungkan dengan scrollController bawaan sheet
-              child: SingleChildScrollView(
-                controller: scrollController,
-                // ClampingScrollPhysics wajib agar sheet tidak membal dan lebih mudah ditarik
-                physics: const ClampingScrollPhysics(),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 12),
-                    // Handle bar (garis abu-abu)
-                    Center(
-                      child: Container(
-                        width: 45, 
-                        height: 5, 
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300], 
-                          borderRadius: BorderRadius.circular(10)
-                        )
-                      ),
-                    ),
-                    _buildSectionHeader("Destinasi Populer"),
-                    
-                    // Isi konten wisata
-                    _buildWisataGrid(),
-                    
-                    // Beri jarak bawah sangat besar agar bisa di-scroll sampai akhir
-                    const SizedBox(height: 200), 
+            // --- BERIKUT PENAMBAHAN REFRESH TANPA MENGHAPUS LOGIKA LAMA ---
+            return RefreshIndicator(
+              onRefresh: () async {
+                await _tentukanPosisi(); // Memanggil fungsi pencari lokasi yang sudah kamu buat
+                await Future.delayed(const Duration(seconds: 2));
+                if (mounted) setState(() {});
+              },
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8F9FA),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(35), 
+                    topRight: Radius.circular(35)
+                  ),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, -5))
                   ],
+                ),
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  // Physics ini penting agar efek "tarik" refresh selalu aktif
+                  physics: const AlwaysScrollableScrollPhysics(), 
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      // Handle bar (garis abu-abu)
+                      Center(
+                        child: Container(
+                          width: 45, 
+                          height: 5, 
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300], 
+                            borderRadius: BorderRadius.circular(10)
+                          )
+                        ),
+                      ),
+                      _buildSectionHeader("Destinasi Populer"),
+                      
+                      // Isi konten wisata
+                      _buildWisataGrid(),
+                      
+                      // Beri jarak bawah sangat besar
+                      const SizedBox(height: 200), 
+                    ],
+                  ),
                 ),
               ),
             );
           },
         ),
       ],
+    );
+  }
+
+ void _showFilterSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder( // Agar UI di dalam modal bisa update saat diklik
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Filter Pencarian", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        TextButton(
+                          onPressed: () {
+                            setModalState(() {
+                              _selectedCategory = "";
+                              _selectedLocation = "";
+                              _minPriceController.clear();
+                              _maxPriceController.clear();
+                            });
+                          }, 
+                          child: const Text("Reset", style: TextStyle(color: Colors.red))
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      children: [
+                        const Text("Kategori Wisata", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        _buildFilterChips(
+                          ["Air Terjun", "Danau", "Puncak", "Hutan", "Pantai"],
+                          _selectedCategory,
+                          (val) => setModalState(() => _selectedCategory = val),
+                        ),
+                        const SizedBox(height: 25),
+                        const Text("Lokasi", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        _buildFilterChips(
+                          ["Ciamis", "Tasikmalaya", "Banjar", "Pangandaran"],
+                          _selectedLocation,
+                          (val) => setModalState(() => _selectedLocation = val),
+                        ),
+                        const SizedBox(height: 25),
+                        const Text("Range Harga", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(child: _buildPriceField("Min", _minPriceController)),
+                            const SizedBox(width: 15),
+                            Expanded(child: _buildPriceField("Max", _maxPriceController)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6A1B9A),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        ),
+                        onPressed: () {
+                          // Navigasi ke hasil pencarian dengan parameter filter
+                          Navigator.pop(context);
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => SearchResultScreen(
+                            query: _searchController.text,
+                            category: _selectedCategory,
+                            location: _selectedLocation,
+                            minPrice: int.tryParse(_minPriceController.text),
+                            maxPrice: int.tryParse(_maxPriceController.text),
+                          )));
+                        },
+                        child: const Text("Terapkan Filter", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        );
+      },
+    );
+  }
+
+  Widget _buildFilterChips(List<String> items, String selectedValue, Function(String) onSelected) {
+    return Wrap(
+      spacing: 8,
+      children: items.map((item) {
+        bool isSelected = selectedValue == item;
+        return ChoiceChip(
+          label: Text(item),
+          selected: isSelected,
+          onSelected: (bool selected) {
+            onSelected(selected ? item : "");
+          },
+          selectedColor: const Color(0xFF6A1B9A).withOpacity(0.2),
+          labelStyle: TextStyle(
+            fontSize: 12, 
+            color: isSelected ? const Color(0xFF6A1B9A) : Colors.black87,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildPriceField(String label, TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixText: "Rp ",
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      keyboardType: TextInputType.number,
     );
   }
 
@@ -246,29 +396,49 @@ Widget _buildBerandaSatuScroll() {
 }
 
   Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 55,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)]),
-              child: TextField(
-                controller: _searchController,
-                onSubmitted: (v) {
-                  if (v.isNotEmpty) Navigator.push(context, MaterialPageRoute(builder: (c) => SearchResultScreen(query: v)));
-                },
-                decoration: const InputDecoration(hintText: "Cari Wisata Idaman...", prefixIcon: Icon(Icons.search, color: Color(0xFF6A1B9A)), border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 18)),
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+    child: Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 55,
+            decoration: BoxDecoration(
+              color: Colors.white, 
+              borderRadius: BorderRadius.circular(18), 
+              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)]
+            ),
+            child: TextField(
+              controller: _searchController,
+              onSubmitted: (v) {
+                if (v.isNotEmpty) Navigator.push(context, MaterialPageRoute(builder: (c) => SearchResultScreen(query: v)));
+              },
+              decoration: const InputDecoration(
+                hintText: "Cari Wisata Idaman...", 
+                prefixIcon: Icon(Icons.search, color: Color(0xFF6A1B9A)), 
+                border: InputBorder.none, 
+                contentPadding: EdgeInsets.symmetric(vertical: 18)
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(15)), child: const Icon(Icons.tune, color: Colors.white)),
-        ],
-      ),
-    );
-  }
+        ),
+        const SizedBox(width: 12),
+        // --- UPDATE DI SINI: Tambahkan GestureDetector ---
+        GestureDetector(
+          onTap: () => _showFilterSheet(context), // Memanggil menu filter
+          child: Container(
+            padding: const EdgeInsets.all(14), 
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2), 
+              borderRadius: BorderRadius.circular(15)
+            ), 
+            child: const Icon(Icons.tune, color: Colors.white),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildCategories() {
   List<Map<String, dynamic>> categories = [
