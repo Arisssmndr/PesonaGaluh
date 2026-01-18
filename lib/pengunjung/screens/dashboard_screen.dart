@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'search_result_screen.dart';
+import 'notification_dashboard.dart';
 
 class DashboardPengunjung extends StatefulWidget {
   const DashboardPengunjung({super.key});
@@ -188,13 +189,61 @@ Widget _buildBerandaSatuScroll() {
     );
   }
 
-  Widget _buildNotificationIcon() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), shape: BoxShape.circle),
-      child: const Icon(Icons.notifications_none, color: Colors.white, size: 24),
-    );
-  }
+ Widget _buildNotificationIcon() {
+  // Menentukan batas waktu 24 jam yang lalu
+  DateTime twentyFourHoursAgo = DateTime.now().subtract(const Duration(days: 1));
+
+  return StreamBuilder<QuerySnapshot>(
+    // Query untuk mengambil data wisata yang dibuat setelah 24 jam yang lalu
+    stream: FirebaseFirestore.instance
+        .collection('places')
+        .where('createdAt', isGreaterThan: twentyFourHoursAgo)
+        .snapshots(),
+    builder: (context, snapshot) {
+      // Menghitung jumlah dokumen baru
+      int badgeCount = snapshot.hasData ? snapshot.data!.docs.length : 0;
+
+      return GestureDetector(
+        onTap: () {
+          // Navigasi ke halaman daftar notifikasi
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const NotificationScreen()),
+          );
+        },
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.notifications_none, color: Colors.white, size: 24),
+            ),
+            // Menampilkan badge angka merah jika ada data baru
+            if (badgeCount > 0)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  child: Text(
+                    '$badgeCount',
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildSearchBar() {
     return Padding(
