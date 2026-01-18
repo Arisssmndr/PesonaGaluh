@@ -81,7 +81,9 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
         child: IndexedStack(index: _selectedIndex, children: _getHalaman()),
       ),
       bottomNavigationBar: _buildBottomNav(),
+      
     );
+
   }
 
   // --- REVISI: BOX PUTIH MUNCUL & SCROLL MENYATU ---
@@ -89,7 +91,7 @@ class _DashboardPengunjungState extends State<DashboardPengunjung> {
 Widget _buildBerandaSatuScroll() {
     return Stack(
       children: [
-        // 1. Bagian Ungu (Header, Search, Kategori)
+        // 1. Bagian Ungu (Header, Search, Kategori) - TETAP SAMA
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -111,48 +113,53 @@ Widget _buildBerandaSatuScroll() {
           minChildSize: 0.48, 
           maxChildSize: 0.95, 
           snap: true,
-          // Tambahkan snapSizes agar kotak langsung 'nempel' ke atas saat ditarik
           snapSizes: const [0.48, 0.95], 
           builder: (context, scrollController) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8F9FA),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(35), 
-                  topRight: Radius.circular(35)
-                ),
-                boxShadow: [
-                  BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, -5))
-                ],
-              ),
-              // Agar SATU KOTAK terangkat, kita gunakan SingleChildScrollView
-              // yang dihubungkan dengan scrollController bawaan sheet
-              child: SingleChildScrollView(
-                controller: scrollController,
-                // ClampingScrollPhysics wajib agar sheet tidak membal dan lebih mudah ditarik
-                physics: const ClampingScrollPhysics(),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 12),
-                    // Handle bar (garis abu-abu)
-                    Center(
-                      child: Container(
-                        width: 45, 
-                        height: 5, 
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300], 
-                          borderRadius: BorderRadius.circular(10)
-                        )
-                      ),
-                    ),
-                    _buildSectionHeader("Destinasi Populer"),
-                    
-                    // Isi konten wisata
-                    _buildWisataGrid(),
-                    
-                    // Beri jarak bawah sangat besar agar bisa di-scroll sampai akhir
-                    const SizedBox(height: 200), 
+            // --- BERIKUT PENAMBAHAN REFRESH TANPA MENGHAPUS LOGIKA LAMA ---
+            return RefreshIndicator(
+              onRefresh: () async {
+                await _tentukanPosisi(); // Memanggil fungsi pencari lokasi yang sudah kamu buat
+                await Future.delayed(const Duration(seconds: 2));
+                if (mounted) setState(() {});
+              },
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8F9FA),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(35), 
+                    topRight: Radius.circular(35)
+                  ),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, -5))
                   ],
+                ),
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  // Physics ini penting agar efek "tarik" refresh selalu aktif
+                  physics: const AlwaysScrollableScrollPhysics(), 
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      // Handle bar (garis abu-abu)
+                      Center(
+                        child: Container(
+                          width: 45, 
+                          height: 5, 
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300], 
+                            borderRadius: BorderRadius.circular(10)
+                          )
+                        ),
+                      ),
+                      _buildSectionHeader("Destinasi Populer"),
+                      
+                      // Isi konten wisata
+                      _buildWisataGrid(),
+                      
+                      // Beri jarak bawah sangat besar
+                      const SizedBox(height: 200), 
+                    ],
+                  ),
                 ),
               ),
             );
